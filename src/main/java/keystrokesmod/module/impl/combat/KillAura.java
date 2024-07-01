@@ -474,7 +474,7 @@ public class KillAura extends Module {
             if (n != 360.0f && !Utils.inFov(n, entity)) {
                 continue;
             }
-            double distance = mc.thePlayer.getDistanceSqToEntity(entity); // need a more accurate distance check
+            double distance = RotationUtils.getDistanceSqToEntity(entity);
             if (distance <= blockRange.getInput() * blockRange.getInput() && autoBlockMode.getInput() > 0 && Utils.holdingSword()) {
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
                 block.set(true);
@@ -508,7 +508,7 @@ public class KillAura extends Module {
                     comparator = Comparator.comparingDouble(entityPlayer2 -> (double)entityPlayer2.hurtTime);
                     break;
                 case 2:
-                    comparator = Comparator.comparingDouble(entity -> mc.thePlayer.getDistanceSqToEntity(entity));
+                    comparator = Comparator.comparingDouble(entity -> mc.thePlayer.getDistanceSqToEntity(entity)); // FIXME: computing accurate distance so much is inefficient, whenever this aura gets a target info caching system, replace with RotationUtils.getDistanceSqToEntity()
                     break;
                 case 3:
                     comparator = Comparator.comparingDouble(entity2 -> RotationUtils.distanceFromYaw(entity2, false));

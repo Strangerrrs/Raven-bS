@@ -5,6 +5,7 @@ import keystrokesmod.module.impl.client.Settings;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.*;
@@ -47,6 +48,21 @@ public class RotationUtils {
         return fixRotation(array[0], array[1], n, n2);
     }
 
+    public static double getDistanceSqToEntity(final Entity entity) {
+        EntityPlayerSP player = mc.thePlayer;
+        AxisAlignedBB bb = entity.getEntityBoundingBox().expand(
+                entity.getCollisionBorderSize(),
+                entity.getCollisionBorderSize(),
+                entity.getCollisionBorderSize()
+        );
+
+        double deltaX = player.posX - MathHelper.clamp_double(player.posX, bb.minX, bb.maxX);
+        double deltaY = (player.posY + player.getEyeHeight()) - MathHelper.clamp_double(player.posY + player.getEyeHeight(), bb.minY, bb.maxY);
+        double deltaZ = player.posZ - MathHelper.clamp_double(player.posZ, bb.minZ, bb.maxZ);
+
+        return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+    }
+
     public static double distanceFromYaw(final Entity entity, final boolean b) {
         return Math.abs(MathHelper.wrapAngleTo180_double(i(entity.posX, entity.posZ) - ((b && PreMotionEvent.setRenderYaw()) ? RotationUtils.renderYaw : mc.thePlayer.rotationYaw)));
     }
@@ -83,16 +99,21 @@ public class RotationUtils {
         if (entity == null) {
             return null;
         }
-        final double n = entity.posX - mc.thePlayer.posX;
-        final double n2 = entity.posZ - mc.thePlayer.posZ;
-        double n3;
-        if (entity instanceof EntityLivingBase) {
-            final EntityLivingBase entityLivingBase = (EntityLivingBase) entity;
-            n3 = entityLivingBase.posY + entityLivingBase.getEyeHeight() * 0.9 - (mc.thePlayer.posY + mc.thePlayer.getEyeHeight());
-        } else {
-            n3 = (entity.getEntityBoundingBox().minY + entity.getEntityBoundingBox().maxY) / 2.0 - (mc.thePlayer.posY + mc.thePlayer.getEyeHeight());
-        }
-        return new float[]{mc.thePlayer.rotationYaw + MathHelper.wrapAngleTo180_float((float) (Math.atan2(n2, n) * 57.295780181884766) - 90.0f - mc.thePlayer.rotationYaw), clamp(mc.thePlayer.rotationPitch + MathHelper.wrapAngleTo180_float((float) (-(Math.atan2(n3, MathHelper.sqrt_double(n * n + n2 * n2)) * 57.295780181884766)) - mc.thePlayer.rotationPitch) + 3.0f)};
+
+        EntityPlayerSP player = mc.thePlayer;
+        AxisAlignedBB bb = entity.getEntityBoundingBox().expand(
+                entity.getCollisionBorderSize(),
+                entity.getCollisionBorderSize(),
+                entity.getCollisionBorderSize()
+        );
+
+        double deltaX = player.posX - MathHelper.clamp_double(player.posX, bb.minX, bb.maxX);
+        double deltaY = (player.posY + player.getEyeHeight()) - MathHelper.clamp_double(player.posY + player.getEyeHeight(), bb.minY, bb.maxY);
+        double deltaZ = player.posZ - MathHelper.clamp_double(player.posZ, bb.minZ, bb.maxZ);
+
+        // FIXME: this math looks horrible, probably inaccurate too, but it will have to do for now
+        // adding onto above, this probably generates invalid values, someone please look into fixing this whenever possible
+        return new float[] {mc.thePlayer.rotationYaw + MathHelper.wrapAngleTo180_float((float) (Math.atan2(deltaZ, deltaX) * 57.295780181884766) - 90.0f - mc.thePlayer.rotationYaw), clamp(mc.thePlayer.rotationPitch + MathHelper.wrapAngleTo180_float((float) (-(Math.atan2(deltaY, MathHelper.sqrt_double(deltaX * deltaX + deltaZ * deltaZ)) * 57.295780181884766)) - mc.thePlayer.rotationPitch) + 3.0f)};
     }
 
     public static float[] getRotationsPredicated(final Entity entity, final int ticks) {
