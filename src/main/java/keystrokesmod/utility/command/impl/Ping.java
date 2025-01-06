@@ -9,8 +9,6 @@ public class Ping extends Command {
 
     @Override
     public void onExecute(String[] args) {
-        keystrokesmod.utility.Ping.checkPing();
+        keystrokesmod.utility.Ping.checkPing(true);
     }
-
-
 }

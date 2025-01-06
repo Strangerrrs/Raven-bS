@@ -14,6 +14,6 @@ public class Name extends Command {
             return;
         }
         Utils.addToClipboard(mc.thePlayer.getName());
-        chat("&7[&fname&7] Copied &b" + mc.thePlayer.getName() + " &7to clipboard");
+        chatWithPrefix("&7Copied &b" + mc.thePlayer.getName() + " &7to clipboard");
     }
 }

@@ -53,7 +53,7 @@ public abstract class MixinEntityLivingBase extends Entity {
     @Inject(method = "func_110146_f", at = @At("HEAD"), cancellable = true)
     protected void injectFunc110146_f(float p_110146_1_, float p_110146_2_, CallbackInfoReturnable<Float> cir) {
         float rotationYaw = this.rotationYaw;
-        if (Settings.fullBody != null && Settings.rotateBody != null && !Settings.fullBody.isToggled() && Settings.rotateBody.isToggled() && (EntityLivingBase) (Object) this instanceof EntityPlayerSP) {
+        if (Settings.fullBody != null && Settings.rotateBody != null && !Settings.fullBody.isToggled() && Settings.rotateBody.isToggled() && (EntityLivingBase) (Object) this instanceof EntityPlayerSP && PreMotionEvent.setRenderYaw()) {
             if (this.swingProgress > 0F) {
                 p_110146_1_ = RotationUtils.renderYaw;
             }

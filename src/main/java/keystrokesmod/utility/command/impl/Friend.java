@@ -12,7 +12,7 @@ public class Friend extends Command {
     public void onExecute(String[] args) {
         if (args.length == 2) {
             if (args[1].equals("clear")) {
-                chat("&7[&ffriend&7] &b" + Utils.friends.size() + " &7friend" + (Utils.friends.size() == 1 ? "" : "s") + " cleared.");
+                chatWithPrefix("&b" + Utils.friends.size() + " &7friend" + (Utils.friends.size() == 1 ? "" : "s") + " cleared.");
                 Utils.friends.clear();
                 return;
             }

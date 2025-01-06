@@ -5,7 +5,6 @@ import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.utility.command.Command;
 import keystrokesmod.utility.profile.Profile;
-import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Keyboard;
 
 import java.util.HashMap;
@@ -20,21 +19,21 @@ public class Binds extends Command {
     public void onExecute(String[] args) {
         if (args.length <= 1) {
             HashMap<String, String> binds = getBindsModulesMap(0);
-            chat("&7[&fbinds&7] &b" + binds.size() + " &7module" + (binds.size() == 1 ? "" : "s") + " have keybinds.");
+            chatWithPrefix("&b" + binds.size() + " &7module" + (binds.size() == 1 ? "" : "s") + " have keybinds.");
             for (Map.Entry<String, String> bindsMap : binds.entrySet()) {
-                chat(" &b" + bindsMap.getKey() + " &7" + bindsMap.getValue());
+                chatWithPrefix(" &b" + bindsMap.getKey() + " &7" + bindsMap.getValue());
             }
         }
         else if (args.length == 2) {
             int keycode = Keyboard.getKeyIndex(args[1].toUpperCase());
             if (keycode == 0) {
-                chat("&7[&fbinds&7] &7Invalid key.");
+                chatWithPrefix("&7Invalid key.");
                 return;
             }
             HashMap<String, String> binds = getBindsModulesMap(keycode);
-            chat("&7[&fbinds&7] &b" + binds.size() + " &7module" + (binds.size() == 1 ? "" : "s") + " has keybind &b" + args[1].toUpperCase() + "&7.");
+            chatWithPrefix("&b" + binds.size() + " &7module" + (binds.size() == 1 ? "" : "s") + " has keybind &b" + args[1].toUpperCase() + "&7.");
             for (Map.Entry<String, String> bindsMap : binds.entrySet()) {
-                chat(" &b" + bindsMap.getKey() + " &7" + bindsMap.getValue());
+                chatWithPrefix(" &b" + bindsMap.getKey() + " &7" + bindsMap.getValue());
             }
         }
         else {

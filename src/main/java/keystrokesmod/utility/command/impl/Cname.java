@@ -12,7 +12,7 @@ public class Cname extends Command {
     public void onExecute(String[] args) {
         if (args.length == 2) {
             NameHider.fakeName = args[1];
-            chat("&7[&fcname&7] &7Name has been set to &b" + NameHider.fakeName + "&7.");
+            chatWithPrefix("&7Name has been set to &b" + NameHider.fakeName + "&7.");
         }
         else {
             syntaxError();

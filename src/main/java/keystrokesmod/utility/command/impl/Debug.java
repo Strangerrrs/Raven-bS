@@ -12,7 +12,7 @@ public class Debug extends Command {
     public void onExecute(String[] args) {
         if (args.length <= 1) {
             Raven.debug = !Raven.debug;
-            chat("&7[&fdebug&7] &7Debug " + (Raven.debug ? "&aenabled" : "&cdisabled") + "&7.");
+            chatWithPrefix("&7Debug " + (Raven.debug ? "&aenabled" : "&cdisabled") + "&7.");
         }
         else {
             syntaxError();

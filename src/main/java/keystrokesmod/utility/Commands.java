@@ -233,7 +233,7 @@ public class Commands {
                 print(args[2], 0);
             }
             else if (cm.startsWith("ping")) {
-                Ping.checkPing();
+                Ping.checkPing(false);
             }
             else if (cm.startsWith("sprint")) {
                 if (!hasArgs || args.length != 2) {
@@ -499,6 +499,6 @@ public class Commands {
     }
 
     public static void od() {
-        Ping.rs();
+        Ping.reset(false);
     }
 }

@@ -59,7 +59,6 @@ public class Reflection {
     public static Field thirdPersonDistance;
     public static Field alwaysEdible;
     public static Field mcGuiInGame;
-    public static Field targetEntity;
     public static Field C01PacketChatMessageMessage;
     public static HashMap<Class, Field> containerInventoryPlayer = new HashMap<>();
     private static List<Class> containerClasses = Arrays.asList(GuiFurnace.class, GuiBrewingStand.class, GuiEnchantment.class, ContainerHopper.class, GuiDispenser.class, ContainerWorkbench.class, ContainerMerchant.class, ContainerHorseInventory.class);
@@ -104,11 +103,6 @@ public class Reflection {
             blockHitDelay = ReflectionHelper.findField(PlayerControllerMP.class, "field_78781_i", "blockHitDelay");
             if (blockHitDelay != null) {
                 blockHitDelay.setAccessible(true);
-            }
-
-            targetEntity = ReflectionHelper.findField(EntityAINearestAttackableTarget.class, "targetEntity", "field_75309_a");
-            if (targetEntity != null) {
-                targetEntity.setAccessible(true);
             }
 
             fallDistance = ReflectionHelper.findField(Entity.class, "fallDistance", "field_70143_R");

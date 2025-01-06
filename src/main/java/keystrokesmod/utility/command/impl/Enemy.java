@@ -12,7 +12,7 @@ public class Enemy extends Command {
     public void onExecute(String[] args) {
         if (args.length == 2) {
             if (args[1].equals("clear")) {
-                chat("&7[&fenemy&7] &b" + Utils.enemies.size() + " &7enem" + (Utils.enemies.size() == 1 ? "y" : "ies") + " cleared.");
+                chatWithPrefix("&b" + Utils.enemies.size() + " &7enem" + (Utils.enemies.size() == 1 ? "y" : "ies") + " cleared.");
                 Utils.enemies.clear();
                 return;
             }

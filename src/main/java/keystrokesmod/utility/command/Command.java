@@ -28,11 +28,15 @@ public abstract class Command {
         return new ArrayList<>();
     }
 
+    protected void chatWithPrefix(String msg) {
+        Utils.sendMessage("&7[&f" + this.command + "&7] &r" + (ModuleManager.lowercaseChatCommands() ? msg.toLowerCase() : msg));
+    }
+
     protected void chat(String msg) {
         Utils.sendMessage(ModuleManager.lowercaseChatCommands() ? msg.toLowerCase() : msg);
     }
 
     protected void syntaxError() {
-        Utils.sendMessage("§csyntax error");
+        Utils.sendMessage("§cSyntax error");
     }
 }
