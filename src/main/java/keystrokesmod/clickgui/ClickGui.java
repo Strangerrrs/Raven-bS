@@ -9,15 +9,13 @@ import keystrokesmod.module.Module;
 import keystrokesmod.module.impl.client.CommandLine;
 import keystrokesmod.module.impl.client.Gui;
 import keystrokesmod.utility.Commands;
+import keystrokesmod.utility.Theme;
 import keystrokesmod.utility.Timer;
 import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.shader.BlurUtils;
 import keystrokesmod.utility.shader.RoundedUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiTextField;
-import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.GuiScreenEvent;
@@ -33,6 +31,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import static keystrokesmod.module.impl.render.HUD.theme;
 
 public class ClickGui extends GuiScreen {
     private ScheduledFuture sf;
@@ -101,7 +101,7 @@ public class ClickGui extends GuiScreen {
             this.drawCenteredString(this.fontRendererObj, "v", wd - w_c, h - 5, Utils.getChroma(2L, 900L));
             this.drawCenteredString(this.fontRendererObj, "e", wd - w_c, h + 5, Utils.getChroma(2L, 600L));
             this.drawCenteredString(this.fontRendererObj, "n", wd - w_c, h + 15, Utils.getChroma(2L, 300L));
-            this.drawCenteredString(this.fontRendererObj, "bS", wd + 1 + w_c, h + 30, Utils.getChroma(2L, 0L));
+            this.drawCenteredString(this.fontRendererObj, "b4", wd + 1 + w_c, h + 30, Utils.getChroma(2L, 0L));
             this.drawVerticalLine(wd - 10 - w_c, h - 30, h + 43, Color.white.getRGB());
             this.drawVerticalLine(wd + 10 + w_c, h - 30, h + 43, Color.white.getRGB());
             if (this.logoSmoothLength != null) {
@@ -110,6 +110,43 @@ public class ClickGui extends GuiScreen {
                 this.drawHorizontalLine(wd + 10, wd + 10 - r, h + 42, -1);
             }
         }
+
+        ScaledResolution sr = new ScaledResolution(mc);
+        FontRenderer fontRenderer = this.mc.fontRendererObj;
+        Color color = new Color(57, 146, 229);
+        int startX = 5;
+        int startY = sr.getScaledHeight() - 35;
+
+        int gradientColor = Theme.getGradient((int) theme.getInput(), 0);
+        String fixedPart1 = "welcome, ";
+        String dynamicPart = Utils.getServerName();
+        String fixedPart2 = " (#1)";
+
+        fontRenderer.drawString(fixedPart1, startX, startY, color.getRGB());
+        int dynamicStartX = startX + fontRenderer.getStringWidth(fixedPart1);
+        fontRenderer.drawString(dynamicPart, dynamicStartX, startY, gradientColor);
+        int fixedPart2StartX = dynamicStartX + fontRenderer.getStringWidth(dynamicPart);
+        fontRenderer.drawString(fixedPart2, fixedPart2StartX, startY, color.getRGB());
+
+        fontRenderer.drawString("raven premium-15", startX, startY + 10, color.getRGB());
+
+        String original = "dev. blowsy";
+        String hiddenChar = "§k";
+
+        String[] gradualText = new String[original.length() - 4 + 1];
+
+        for (int i = 0; i < gradualText.length; i++) {
+            int insertPosition = 5 + i;
+            StringBuilder sb = new StringBuilder(original);
+            if (insertPosition < sb.length()) {
+                sb.insert(insertPosition, hiddenChar);
+            }
+            gradualText[i] = sb.toString();
+        }
+
+        int tick = (int) (System.currentTimeMillis() / 300 % gradualText.length);
+        String text = gradualText[tick];
+        fontRenderer.drawString(text, startX, startY + 20, color.getRGB());
 
         for (CategoryComponent c : categories) {
             c.render(this.fontRendererObj);
