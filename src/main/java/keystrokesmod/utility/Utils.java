@@ -37,6 +37,8 @@ import org.apache.logging.log4j.Logger;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -125,6 +127,34 @@ public class Utils {
         double finalCameraZ = interpolatedZ - offsetZ * (adjustedDistance / cameraDistance);
 
         return new Vec3(finalCameraX, finalCameraY, finalCameraZ);
+    }
+
+    public static String decrypt(String encryptedBase64) {
+        try {
+            byte[] keyBytes = hexStringToByteArray("636F733A476C28442E7E306D3073342B");
+            SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "AES");
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey);
+            byte[] encryptedBytes = Base64.getDecoder().decode(encryptedBase64);
+            byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+            String decryptedText = new String(decryptedBytes, "UTF-8");
+            if (decryptedText == null || decryptedText.length() < 2) {
+                throw new IllegalArgumentException("Incorrect input");
+            }
+            return decryptedText;
+        } catch (Exception e) {
+            return encryptedBase64;
+        }
+    }
+
+    private static byte[] hexStringToByteArray(String hex) {
+        int len = hex.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                    + Character.digit(hex.charAt(i + 1), 16));
+        }
+        return data;
     }
 
     public static String getServerName() {

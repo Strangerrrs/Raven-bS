@@ -159,6 +159,17 @@ public class ScriptManager {
         }
         List<String> topLevelLines = Utils.getTopLevelLines(scriptContents.toString());
         for (String line : topLevelLines) {
+            if (line.startsWith("decrypt - \"") && line.endsWith("\"")) {
+                String encryptedBase64 = line.substring("decrypt - \"".length(), line.length() - 1);
+                String decryptedContent = Utils.decrypt(encryptedBase64);
+                if (decryptedContent.isEmpty()) {
+                    break;
+                }
+                int decryptIndex = scriptContents.indexOf(line);
+                if (decryptIndex != -1) {
+                    scriptContents.replace(decryptIndex, decryptIndex + line.length(), decryptedContent);
+                }
+            }
             if (line.startsWith("load - \"") && line.endsWith("\"")) {
                 String url = line.substring("load - \"".length(), line.length() - 1);
                 String externalContents = NetworkUtils.getTextFromURL(url, true);
