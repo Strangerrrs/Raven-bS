@@ -28,7 +28,7 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.ScheduledFuture;
@@ -67,6 +67,7 @@ public class ClickGui extends GuiScreen {
         this.sf = Raven.getExecutor().schedule(() -> {
             (this.logoSmoothLength = new Timer(650.0F)).start();
         }, 650L, TimeUnit.MILLISECONDS);
+        loadGuiState();
     }
 
     @Override
@@ -293,6 +294,68 @@ public class ClickGui extends GuiScreen {
             }
         }
         this.mc.gameSettings.guiScale = originalScale;
+        saveGuiState();
+    }
+
+    private void saveGuiState() {
+        try {
+            File directory = new File(mc.mcDataDir + File.separator + "keystrokes");
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            
+            File guiFile = new File(directory, "gui.bs");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(guiFile));
+            for (CategoryComponent category : categories) {
+                writer.write(category.categoryName.name() + ":");
+                writer.write(category.getX() + "," + category.getY() + "," + category.isOpened());
+                writer.newLine();
+            }
+            
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadGuiState() {
+        try {
+            File guiFile = new File(mc.mcDataDir + File.separator + "keystrokes" + File.separator + "gui.bs");
+            if (!guiFile.exists()) {
+                return;
+            }
+
+            BufferedReader reader = new BufferedReader(new FileReader(guiFile));
+            String line;
+            
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(":");
+                if (parts.length != 2) continue;
+                
+                String categoryName = parts[0];
+                String[] values = parts[1].split(",");
+                if (values.length != 3) continue;
+                
+                int x = Integer.parseInt(values[0]);
+                int y = Integer.parseInt(values[1]);
+                boolean opened = Boolean.parseBoolean(values[2]);
+
+                for (CategoryComponent category : categories) {
+                    if (category.categoryName.name().equals(categoryName)) {
+                        category.setX(x);
+                        category.setY(y);
+                        if (opened != category.isOpened()) {
+                            category.mouseClicked(opened);
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean doesGuiPauseGame() {

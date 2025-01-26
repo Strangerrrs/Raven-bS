@@ -21,19 +21,20 @@ public class BHop extends Module {
     private ButtonSetting liquidDisable;
     private ButtonSetting sneakDisable;
     private ButtonSetting stopMotion;
-    private String[] modes = new String[]{"Strafe", "Ground", "Low"};
+    private ButtonSetting watchdogMode;
+    private String[] modes = new String[]{"Strafe", "Ground", "7 tick"};
     public boolean hopping;
     private boolean collided, strafe, down;
 
     public BHop() {
         super("Bhop", Module.category.movement);
         this.registerSetting(mode = new SliderSetting("Mode", 0, modes));
-        this.registerSetting(speedSetting = new SliderSetting("Speed", 2.0, 0.5, 8.0, 0.1));
+        this.registerSetting(speedSetting = new SliderSetting("Speed", 1.0, 0.5, 8.0, 0.1));
         this.registerSetting(autoJump = new ButtonSetting("Auto jump", true));
         this.registerSetting(disableInInventory = new ButtonSetting("Disable in inventory", true));
         this.registerSetting(liquidDisable = new ButtonSetting("Disable in liquid", true));
         this.registerSetting(sneakDisable = new ButtonSetting("Disable while sneaking", true));
-        this.registerSetting(stopMotion = new ButtonSetting("Stop motion", false));
+        this.registerSetting(watchdogMode = new ButtonSetting("Watchdog Mode", false));
     }
 
     @Override
@@ -57,6 +58,13 @@ public class BHop extends Module {
             return;
         }
         if (ModuleManager.bedAura.isEnabled() && ModuleManager.bedAura.disableBHop.isToggled() && ModuleManager.bedAura.currentBlock != null && RotationUtils.inRange(ModuleManager.bedAura.currentBlock, ModuleManager.bedAura.range.getInput())) {
+            return;
+        }
+        if (watchdogMode.isToggled() && mc.gameSettings.keyBindBack.isKeyDown()) {
+            if (mc.thePlayer.onGround && autoJump.isToggled()) {
+                mc.thePlayer.jump();
+            }
+            hopping = false;
             return;
         }
         switch ((int) mode.getInput()) {
@@ -113,11 +121,16 @@ public class BHop extends Module {
                     int simpleY = (int) Math.round((e.posY % 1) * 10000);
 
                     if (mc.thePlayer.hurtTime == 0 && Utils.isMoving() && !collided) {
-                        if (simpleY == 13) {
-                            mc.thePlayer.motionY = mc.thePlayer.motionY - 0.02483;
+                        if (simpleY == 4200) {
+                            mc.thePlayer.motionY = 0.39;
                         }
-                        if (simpleY == 2000) {
-                            mc.thePlayer.motionY = mc.thePlayer.motionY - 0.1913;
+
+                        if (simpleY == 1138) {
+                            mc.thePlayer.motionY = mc.thePlayer.motionY - 0.13;
+                        }
+
+                        if (simpleY == 2031) {
+                            mc.thePlayer.motionY = mc.thePlayer.motionY - 0.2;
                         }
 
                         if (simpleY == 13) {
@@ -132,19 +145,9 @@ public class BHop extends Module {
                         }
                         if (strafe) {
                             Utils.setSpeed(Utils.getHorizontalSpeed());
-                        }
                     }
                 }
                 break;
         }
-    }
-
-    public void onDisable() {
-        if (stopMotion.isToggled()) {
-            mc.thePlayer.motionZ = 0;
-            mc.thePlayer.motionY = 0;
-            mc.thePlayer.motionX = 0;
-        }
-        hopping = false;
-    }
+    }}
 }

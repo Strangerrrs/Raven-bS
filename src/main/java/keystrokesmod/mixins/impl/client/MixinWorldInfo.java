@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(WorldInfo.class)
+@Mixin(value = WorldInfo.class, priority = 999)
 public abstract class MixinWorldInfo {
     @Shadow
     private long worldTime;

@@ -17,15 +17,17 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class NoFall extends Module {
     public SliderSetting mode;
     private SliderSetting minFallDistance;
+    private SliderSetting timerSpeed;
     private ButtonSetting disableAdventure;
     private ButtonSetting ignoreVoid;
-    private String[] modes = new String[]{"Spoof", "Extra", "NoGround"};
+    private String[] modes = new String[]{"Spoof", "Packet A", "NoGround"};
     private double initialY;
 
     public NoFall() {
         super("NoFall", category.player);
         this.registerSetting(mode = new SliderSetting("Mode", 0, modes));
         this.registerSetting(minFallDistance = new SliderSetting("Minimum fall distance", 3, 0, 10, 0.1));
+        this.registerSetting(timerSpeed = new SliderSetting("Timer Speed", 0.7, 0.1, 2.0, 0.1));
         this.registerSetting(disableAdventure = new ButtonSetting("Disable adventure", false));
         this.registerSetting(ignoreVoid = new ButtonSetting("Ignore void", true));
     }
@@ -50,7 +52,7 @@ public class NoFall extends Module {
                     break;
                 case 1:
                     if (distanceFallen >= minFallDistance.getInput()) {
-                        Utils.getTimer().timerSpeed = (float) 0.7;
+                        Utils.getTimer().timerSpeed = (float) timerSpeed.getInput();
                         PacketUtils.sendPacketNoEvent(new C03PacketPlayer(true));
                         initialY = mc.thePlayer.posY;
                         if (Raven.debug) {

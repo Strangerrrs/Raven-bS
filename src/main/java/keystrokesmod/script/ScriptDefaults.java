@@ -373,15 +373,11 @@ public class ScriptDefaults {
             return new int[]{scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
         }
 
-        public static float getServerDirection(PlayerState state) {
+        public float getServerDirection(PlayerState state) {
             return state.yaw;
         }
 
         public static Object[] raycastBlock(double distance) {
-            return raycastBlock(distance, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch, true);
-        }
-
-        public static Object[] raycastBlock(double distance, float yaw, float pitch) {
             return raycastBlock(distance, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch, true);
         }
 

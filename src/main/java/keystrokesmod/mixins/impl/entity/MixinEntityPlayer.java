@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(EntityPlayer.class)
+@Mixin(value =EntityPlayer.class, priority = 999)
 public abstract class MixinEntityPlayer extends EntityLivingBase {
     public MixinEntityPlayer(World p_i1594_1_) {
         super(p_i1594_1_);

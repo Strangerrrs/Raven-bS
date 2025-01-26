@@ -67,6 +67,14 @@ public class ModuleManager {
     public static Weather weather;
     public static ChatCommands chatCommands;
 
+    private static ModuleManager instance;
+    public ModuleManager() {
+        instance = this;
+    }
+    public static ModuleManager getInstance() {
+        return instance;
+    }
+
     public void register() {
         this.addModule(autoClicker = new AutoClicker());
         this.addModule(new LongJump());

@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Map;
 
-@Mixin(EntityLivingBase.class)
+@Mixin(value = EntityLivingBase.class, priority = 999)
 public abstract class MixinEntityLivingBase extends Entity {
     public MixinEntityLivingBase(World worldIn) {
         super(worldIn);
@@ -53,7 +53,7 @@ public abstract class MixinEntityLivingBase extends Entity {
     @Inject(method = "func_110146_f", at = @At("HEAD"), cancellable = true)
     protected void injectFunc110146_f(float p_110146_1_, float p_110146_2_, CallbackInfoReturnable<Float> cir) {
         float rotationYaw = this.rotationYaw;
-        if (Settings.fullBody != null && Settings.rotateBody != null && !Settings.fullBody.isToggled() && Settings.rotateBody.isToggled() && (EntityLivingBase) (Object) this instanceof EntityPlayerSP && PreMotionEvent.setRenderYaw()) {
+                if (Settings.fullBody != null && Settings.rotateBody != null && !Settings.fullBody.isToggled() && Settings.rotateBody.isToggled() && (EntityLivingBase) (Object) this instanceof EntityPlayerSP) {
             if (this.swingProgress > 0F) {
                 p_110146_1_ = RotationUtils.renderYaw;
             }

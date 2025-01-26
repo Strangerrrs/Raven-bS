@@ -30,7 +30,7 @@ public class Settings extends Module {
     public static SliderSetting offset;
     public static SliderSetting timeMultiplier;
     public static ButtonSetting sendMessage;
-    private String[] capes = new String[]{"None", "Anime", "Aqua", "Green", "Purple", "Red", "White", "Yellow"};
+    private String[] capes = new String[]{"None", "Anime", "Aqua", "Green", "Purple", "Red", "White", "Yellow", "Myau", "Astolfo"};
     public static List<ResourceLocation> loadedCapes = new ArrayList<>();
 
     public Settings() {
@@ -44,7 +44,7 @@ public class Settings extends Module {
         this.registerSetting(setChatAsInventory = new ButtonSetting("Set chat as inventory", false));
         this.registerSetting(new DescriptionSetting("Rotations"));
         this.registerSetting(rotateBody = new ButtonSetting("Rotate body", true));
-        this.registerSetting(fullBody = new ButtonSetting("Full body", false));
+        this.registerSetting(fullBody = new ButtonSetting("Full body", true));
         //this.registerSetting(movementFix = new ButtonSetting("Movement fix", false));
         this.registerSetting(randomYawFactor = new SliderSetting("Random yaw factor", 1.0, 0.0, 10.0, 1.0));
         this.registerSetting(new DescriptionSetting("Profiles"));
