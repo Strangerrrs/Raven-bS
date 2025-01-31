@@ -34,7 +34,7 @@ public class AntiFireball extends Module {
     public AntiFireball() {
         super("AntiFireball", category.player);
         this.registerSetting(fov = new SliderSetting("FOV", 360.0, 30.0, 360.0, 4.0));
-        this.registerSetting(range = new SliderSetting("Range", 8.0, 3.0, 15.0, 0.5));
+        this.registerSetting(range = new SliderSetting("Range", 8.0, 3.0, 10.0, 0.5));
         this.registerSetting(disableWhileFlying = new ButtonSetting("Disable while flying", false));
         this.registerSetting(disableWhileScaffold = new ButtonSetting("Disable while scaffold", false));
         this.registerSetting(blocksRotate = new ButtonSetting("Rotate with blocks", false));

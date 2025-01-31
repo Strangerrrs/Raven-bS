@@ -67,6 +67,14 @@ public class ModuleManager {
     public static Weather weather;
     public static ChatCommands chatCommands;
 
+    private static ModuleManager instance;
+    public ModuleManager() {
+        instance = this;
+    }
+    public static ModuleManager getInstance() {
+        return instance;
+    }
+
     public void register() {
         this.addModule(autoClicker = new AutoClicker());
         this.addModule(new LongJump());
@@ -163,6 +171,7 @@ public class ModuleManager {
         this.addModule(new AutoWho());
         this.addModule(new Gui());
         this.addModule(new Shaders());
+        this.addModule(new Disabler());
         antiBot.enable();
         Collections.sort(this.modules, Comparator.comparing(Module::getName));
     }

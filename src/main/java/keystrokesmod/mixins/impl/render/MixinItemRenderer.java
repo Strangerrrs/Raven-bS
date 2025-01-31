@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ItemRenderer.class)
+@Mixin(value = ItemRenderer.class,priority = 999)
 public class MixinItemRenderer implements IMixinItemRenderer {
     private ItemStack originalItemToRender;
     @Shadow

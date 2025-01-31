@@ -21,7 +21,7 @@ public class BHop extends Module {
     private ButtonSetting liquidDisable;
     private ButtonSetting sneakDisable;
     private ButtonSetting stopMotion;
-    private String[] modes = new String[]{"Strafe", "Ground", "Low"};
+    private String[] modes = new String[]{"Strafe", "Ground", "8 tick"};
     public boolean hopping;
     private boolean collided, strafe, down;
 

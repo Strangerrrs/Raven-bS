@@ -1,6 +1,7 @@
 package keystrokesmod.module.impl.player;
 
 import keystrokesmod.event.PreMotionEvent;
+import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -9,6 +10,7 @@ import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.Utils;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.input.Keyboard;
+import net.minecraft.item.ItemBlock;
 
 public class Tower extends Module {
     private SliderSetting mode;
@@ -20,7 +22,9 @@ public class Tower extends Module {
     private ButtonSetting disableWhileCollided;
     private ButtonSetting disableWhileHurt;
     private ButtonSetting sprintJumpForward;
-    private String[] modes = new String[]{"Vanilla", "Low"};
+    private SliderSetting ticksSetting;
+    private int ticks;
+    private String[] modes = new String[]{"Buffer", "Low"};
     private int slowTicks;
     private boolean wasTowering;
     private int offGroundTicks;
@@ -36,6 +40,7 @@ public class Tower extends Module {
         this.registerSetting(disableWhileCollided = new ButtonSetting("Disable while collided", false));
         this.registerSetting(disableWhileHurt = new ButtonSetting("Disable while hurt", false));
         this.registerSetting(sprintJumpForward = new ButtonSetting("Sprint jump forward", false));
+        this.registerSetting(ticksSetting = new SliderSetting("Ticks", 10, 7, 20, 1));
         this.canBeEnabled = false;
     }
 
@@ -106,6 +111,16 @@ public class Tower extends Module {
             }
             reset();
         }
+        if (isTowering()) {
+            if (mc.thePlayer.onGround) {
+                ticks = 0;
+                ModuleManager.scaffold.tower.setEnabled(true);
+            } else if (ticks > ticksSetting.getInput()) {
+                ModuleManager.scaffold.tower.setEnabled(false);
+            }
+        } else {
+            ModuleManager.scaffold.tower.setEnabled(false);
+        }
     }
 
     private void reset() {
@@ -137,5 +152,24 @@ public class Tower extends Module {
 
     public boolean canSprint() {
         return canTower() && this.sprintJumpForward.isToggled() && Keyboard.isKeyDown(mc.gameSettings.keyBindForward.getKeyCode()) && Utils.jumpDown();
+    }
+
+    private boolean isTowering() {
+        return ModuleManager.scaffold.isEnabled() && Keyboard.isKeyDown(mc.gameSettings.keyBindJump.getKeyCode()) && Utils.isMoving() && mc.thePlayer.getHeldItem() != null && mc.thePlayer.getHeldItem().getItem() instanceof ItemBlock;
+    }
+
+    @SubscribeEvent
+    public void onPreUpdate(PreUpdateEvent e) {
+        ticks++;
+    }
+
+    @Override
+    public void onEnable() {
+        ticks = 0;
+    }
+
+    @Override
+    public void onDisable() {
+        ticks = 0;
     }
 }

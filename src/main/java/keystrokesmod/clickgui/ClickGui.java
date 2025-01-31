@@ -28,9 +28,10 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -46,6 +47,18 @@ public class ClickGui extends GuiScreen {
     private GuiTextField commandLineInput;
     public static ArrayList<CategoryComponent> categories;
     public int originalScale;
+
+    private String clientName = "raven bs";
+    private String clientVersion = "plus";
+    private String developer = "key, lquifi, tinywifi";
+    private int color = (new Color(57, 146, 229)).getRGB();
+
+    private boolean clickGuiOpen = false;
+    private long openedTime;
+
+    public float updates;
+    public long last;
+    private float cached;
 
     public ClickGui() {
         categories = new ArrayList();
@@ -67,6 +80,7 @@ public class ClickGui extends GuiScreen {
         this.sf = Raven.getExecutor().schedule(() -> {
             (this.logoSmoothLength = new Timer(650.0F)).start();
         }, 650L, TimeUnit.MILLISECONDS);
+        loadGuiState();
     }
 
     @Override
@@ -101,13 +115,46 @@ public class ClickGui extends GuiScreen {
             this.drawCenteredString(this.fontRendererObj, "v", wd - w_c, h - 5, Utils.getChroma(2L, 900L));
             this.drawCenteredString(this.fontRendererObj, "e", wd - w_c, h + 5, Utils.getChroma(2L, 600L));
             this.drawCenteredString(this.fontRendererObj, "n", wd - w_c, h + 15, Utils.getChroma(2L, 300L));
-            this.drawCenteredString(this.fontRendererObj, "bS", wd + 1 + w_c, h + 30, Utils.getChroma(2L, 0L));
+            this.drawCenteredString(this.fontRendererObj, "bS+", wd + 1 + w_c, h + 30, Utils.getChroma(2L, 0L));
             this.drawVerticalLine(wd - 10 - w_c, h - 30, h + 43, Color.white.getRGB());
             this.drawVerticalLine(wd + 10 + w_c, h - 30, h + 43, Color.white.getRGB());
             if (this.logoSmoothLength != null) {
                 r = this.logoSmoothLength.getValueInt(0, 20, 2);
                 this.drawHorizontalLine(wd - 10, wd - 10 + r, h - 29, -1);
                 this.drawHorizontalLine(wd + 10, wd + 10 - r, h + 42, -1);
+            }
+        }
+
+        if (!clickGuiOpen && this.mc.currentScreen instanceof ClickGui) {
+            clickGuiOpen = true;
+            initTimer(500.0F);
+            startTimer();
+            openedTime = System.currentTimeMillis();
+        } else if (!(this.mc.currentScreen instanceof ClickGui)) {
+            clickGuiOpen = false;
+        } else {
+            int[] displaySize = new int[]{this.width, this.height};
+            int yPosition = displaySize[1] + (8 - getValueInt(0, 30, 2));
+
+            this.fontRendererObj.drawString(clientName + "-" + clientVersion, 4, yPosition, color, true);
+
+            long elapsedTime = System.currentTimeMillis() - openedTime + 50L;
+            int characterIndex = (int) (elapsedTime / 200L);
+            yPosition += this.fontRendererObj.FONT_HEIGHT + 1;
+
+            if (characterIndex < developer.length()) {
+                String obfuscated = "";
+
+                for (int i = 0; i < developer.length(); ++i) {
+                    char currentChar = i < characterIndex 
+                        ? developer.charAt(i)
+                        : (char) ((new Random()).nextInt(26) + 'a');
+                    obfuscated += currentChar;
+                }
+
+                this.fontRendererObj.drawString("devs. " + obfuscated, 4, yPosition, color, true);
+            } else {
+                this.fontRendererObj.drawString("devs. " + developer, 4, yPosition, color, true);
             }
         }
 
@@ -293,6 +340,68 @@ public class ClickGui extends GuiScreen {
             }
         }
         this.mc.gameSettings.guiScale = originalScale;
+        saveGuiState();
+    }
+
+    private void saveGuiState() {
+        try {
+            File directory = new File(mc.mcDataDir + File.separator + "keystrokes");
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+            
+            File guiFile = new File(directory, "gui.bs");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(guiFile));
+            for (CategoryComponent category : categories) {
+                writer.write(category.categoryName.name() + ":");
+                writer.write(category.getX() + "," + category.getY() + "," + category.isOpened());
+                writer.newLine();
+            }
+            
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadGuiState() {
+        try {
+            File guiFile = new File(mc.mcDataDir + File.separator + "keystrokes" + File.separator + "gui.bs");
+            if (!guiFile.exists()) {
+                return;
+            }
+
+            BufferedReader reader = new BufferedReader(new FileReader(guiFile));
+            String line;
+            
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(":");
+                if (parts.length != 2) continue;
+                
+                String categoryName = parts[0];
+                String[] values = parts[1].split(",");
+                if (values.length != 3) continue;
+                
+                int x = Integer.parseInt(values[0]);
+                int y = Integer.parseInt(values[1]);
+                boolean opened = Boolean.parseBoolean(values[2]);
+
+                for (CategoryComponent category : categories) {
+                    if (category.categoryName.name().equals(categoryName)) {
+                        category.setX(x);
+                        category.setY(y);
+                        if (opened != category.isOpened()) {
+                            category.mouseClicked(opened);
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean doesGuiPauseGame() {
@@ -317,5 +426,45 @@ public class ClickGui extends GuiScreen {
         int offset = (int) (setting * 3.0 / 100.0);
 
         return new int[]{passes, offset};
+    }
+
+    public void initTimer(float updates) {
+        this.updates = updates;
+    }
+
+    public void startTimer() {
+        this.cached = 0.0F;
+        this.last = System.currentTimeMillis();
+    }
+
+    public float getValueFloat(float begin, float end, int type) {
+        if (this.cached == end) {
+            return this.cached;
+        } else {
+            float t = (float) (System.currentTimeMillis() - this.last) / this.updates;
+            switch (type) {
+                case 1:
+                    t = t < 0.5F ? 4.0F * t * t * t : (t - 1.0F) * (2.0F * t - 2.0F) * (2.0F * t - 2.0F) + 1.0F;
+                    break;
+                case 2:
+                    t = (float) (1.0D - Math.pow((double) (1.0F - t), 5.0D));
+                    break;
+            }
+
+            float value = begin + t * (end - begin);
+            if ((end > begin && value > end) || (end < begin && value < end)) {
+                value = end;
+            }
+
+            if (value == end) {
+                this.cached = value;
+            }
+
+            return value;
+        }
+    }
+
+    public int getValueInt(int begin, int end, int type) {
+        return Math.round(this.getValueFloat((float) begin, (float) end, type));
     }
 }

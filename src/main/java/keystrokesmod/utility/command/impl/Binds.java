@@ -19,21 +19,21 @@ public class Binds extends Command {
     public void onExecute(String[] args) {
         if (args.length <= 1) {
             HashMap<String, String> binds = getBindsModulesMap(0);
-            chatWithPrefix("&b" + binds.size() + " &7module" + (binds.size() == 1 ? "" : "s") + " have keybinds.");
+            chat("&7[&fbinds&7] &b" + binds.size() + " &7module" + (binds.size() == 1 ? "" : "s") + " have keybinds.");
             for (Map.Entry<String, String> bindsMap : binds.entrySet()) {
-                chatWithPrefix(" &b" + bindsMap.getKey() + " &7" + bindsMap.getValue());
+                chat(" &b" + bindsMap.getKey() + " &7" + bindsMap.getValue());
             }
         }
         else if (args.length == 2) {
             int keycode = Keyboard.getKeyIndex(args[1].toUpperCase());
             if (keycode == 0) {
-                chatWithPrefix("&7Invalid key.");
+                chat("&7[&fbinds&7] &7Invalid key.");
                 return;
             }
             HashMap<String, String> binds = getBindsModulesMap(keycode);
-            chatWithPrefix("&b" + binds.size() + " &7module" + (binds.size() == 1 ? "" : "s") + " has keybind &b" + args[1].toUpperCase() + "&7.");
+            chat("&7[&fbinds&7] &b" + binds.size() + " &7module" + (binds.size() == 1 ? "" : "s") + " has keybind &b" + args[1].toUpperCase() + "&7.");
             for (Map.Entry<String, String> bindsMap : binds.entrySet()) {
-                chatWithPrefix(" &b" + bindsMap.getKey() + " &7" + bindsMap.getValue());
+                chat(" &b" + bindsMap.getKey() + " &7" + bindsMap.getValue());
             }
         }
         else {

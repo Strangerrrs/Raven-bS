@@ -37,6 +37,6 @@ public abstract class Command {
     }
 
     protected void syntaxError() {
-        Utils.sendMessage("§cSyntax error");
+        Utils.sendMessage("§csyntax error");
     }
 }
