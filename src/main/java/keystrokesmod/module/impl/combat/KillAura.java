@@ -1,14 +1,19 @@
 package keystrokesmod.module.impl.combat;
 
 import keystrokesmod.Raven;
-import keystrokesmod.event.*;
+import keystrokesmod.event.PreMotionEvent;
+import keystrokesmod.event.PreUpdateEvent;
+import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Settings;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.utility.*;
+import keystrokesmod.utility.PacketUtils;
+import keystrokesmod.utility.Reflection;
+import keystrokesmod.utility.RotationUtils;
+import keystrokesmod.utility.Utils;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityCreature;
@@ -38,14 +43,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static net.minecraft.util.EnumFacing.DOWN;
 
 public class KillAura extends Module {
-    private SliderSetting aps;
+    private SliderSetting minCPS;
+    private SliderSetting maxCPS;
     public SliderSetting autoBlockMode;
     private SliderSetting fov;
     private SliderSetting attackRange;
     private SliderSetting swingRange;
     private SliderSetting blockRange;
     private SliderSetting rotationMode;
-    private SliderSetting rotationSmoothing;
+    private SliderSetting rotationSpeed;
     private SliderSetting sortMode;
     private SliderSetting switchDelay;
     private SliderSetting targets;
@@ -61,6 +67,7 @@ public class KillAura extends Module {
     private ButtonSetting requireMouseDown;
     private ButtonSetting silentSwing;
     private ButtonSetting weaponOnly;
+    float lastPitch, lastYaw;
 
     private String[] autoBlockModes = new String[] { "Manual", "Vanilla", "Fake", "Partial", "Interact A", "Interact B", "Buffer A", "Buffer B", "Buffer C"};
     private String[] rotationModes = new String[] { "Silent", "Lock view", "None" };
@@ -105,19 +112,20 @@ public class KillAura extends Module {
 
     public KillAura() {
         super("KillAura", category.combat);
-        this.registerSetting(aps = new SliderSetting("APS", 16.0, 1.0, 20.0, 0.5));
+        this.registerSetting(minCPS = new SliderSetting("Min CPS", 9.0, 1.0, 25.0, 0.5));
+        this.registerSetting(maxCPS = new SliderSetting("Max CPS", 12.0, 1.0, 25.0, 0.5));
         this.registerSetting(autoBlockMode = new SliderSetting("Autoblock", 0, autoBlockModes));
         this.registerSetting(fov = new SliderSetting("FOV", 360.0, 30.0, 360.0, 4.0));
         this.registerSetting(attackRange = new SliderSetting("Range (attack)", 3.0, 3.0, 6.0, 0.05));
         this.registerSetting(swingRange = new SliderSetting("Range (swing)", 3.3, 3.0, 8.0, 0.05));
         this.registerSetting(blockRange = new SliderSetting("Range (block)", 6.0, 3.0, 12.0, 0.05));
         this.registerSetting(rotationMode = new SliderSetting("Rotation mode", 0, rotationModes));
-        this.registerSetting(rotationSmoothing = new SliderSetting("Rotation smoothing", 0, 0, 10, 1));
+        this.registerSetting(rotationSpeed = new SliderSetting("Rotation speed", 5.0, 1.0, 5.0, 0.1));
         this.registerSetting(sortMode = new SliderSetting("Sort mode", 0, sortModes));
         this.registerSetting(switchDelay = new SliderSetting("Switch delay", "ms", 200.0, 50.0, 1000.0, 25.0));
         this.registerSetting(targets = new SliderSetting("Targets", 3.0, 1.0, 10.0, 1.0));
         this.registerSetting(targetInvis = new ButtonSetting("Target invis", true));
-        this.registerSetting(attackMobs = new ButtonSetting("Attack mobs", false));
+        this.registerSetting(attackMobs = new ButtonSetting("Attack mobbs", false));
         this.registerSetting(disableInInventory = new ButtonSetting("Disable in inventory", true));
         this.registerSetting(disableWhileBlocking = new ButtonSetting("Disable while blocking", false));
         this.registerSetting(disableWhileMining = new ButtonSetting("Disable while mining", false));
@@ -140,6 +148,8 @@ public class KillAura extends Module {
 
     @Override
     public void onEnable() {
+        lastYaw = mc.thePlayer.rotationYaw;
+        lastPitch = mc.thePlayer.rotationPitch;
         if (rotationMode.getInput() == 0 && autoBlockMode.getInput() <= 1) {
             delayTicks = 1;
         }
@@ -171,6 +181,9 @@ public class KillAura extends Module {
             boolean pressedLeft = Mouse.isButtonDown(0);
             if (pressedLeft && !lastPressedLeft) {
                 onCustomMouse(0, true);
+            }
+            if (this.maxCPS.getInput() < this.minCPS.getInput()) {
+                minCPS.setValue(maxCPS.getInput() - 1);
             }
             if (!pressedLeft && lastPressedLeft) {
                 onCustomMouse(0, false);
@@ -268,7 +281,7 @@ public class KillAura extends Module {
         if (rotationMode.getInput() != 2) {
             if (inRange(target, attackRange.getInput() - 0.005)) {
                 float[] rotations = RotationUtils.getRotations(target, e.getYaw(), e.getPitch());
-                float[] smoothedRotations = getRotationsSmoothed(rotations);
+                float[] smoothedRotations = calculateSmoothRotations(rotations);
                 if (rotationMode.getInput() == 0) { // silent
                     e.setYaw(smoothedRotations[0]);
                     e.setPitch(smoothedRotations[1]);
@@ -295,7 +308,7 @@ public class KillAura extends Module {
         if (rotationMode.getInput() == 1 && target != null) {
             if (inRange(target, attackRange.getInput() - 0.005)) {
                 float[] rotations = RotationUtils.getRotations(target, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch);
-                float[] smoothedRotations = getRotationsSmoothed(rotations);
+                float[] smoothedRotations = calculateSmoothRotations(rotations);
                 mc.thePlayer.rotationYaw = smoothedRotations[0];
                 mc.thePlayer.rotationPitch = smoothedRotations[1];
             }
@@ -680,7 +693,7 @@ public class KillAura extends Module {
     }
 
     private boolean isLookingAtEntity() { //
-        if (rotationMode.getInput() == 0 && rotationSmoothing.getInput() > 0) { // silent
+        if (rotationMode.getInput() == 0) { // silent
             return RotationUtils.isPossibleToHit(attackingEntity, attackRange.getInput() - 0.005, RotationUtils.serverRotations);
         }
         return true;
@@ -912,7 +925,7 @@ public class KillAura extends Module {
     }
 
     private void updateAttackDelay() {
-        delay = (long)(1000.0 / aps.getInput() + Utils.randomizeInt(-4, 4));
+        delay = (long)(1000.0 / Utils.randomizeDouble(minCPS.getInput(), maxCPS.getInput()) + Utils.randomizeInt(-4, 4));
     }
 
     private void swingItem() {
@@ -1023,32 +1036,49 @@ public class KillAura extends Module {
         mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
     }
 
-    private float[] getRotationsSmoothed(float rotations[]) {
-        float serverYaw = RotationUtils.serverRotations[0];
-        float serverPitch = RotationUtils.serverRotations[1];
-        float unwrappedYaw = unwrapYaw(rotations[0], serverYaw);
-
-        float deltaYaw = unwrappedYaw - serverYaw;
-        float deltaPitch = rotations[1] - serverPitch;
-
-        float yawSmoothing = (float) rotationSmoothing.getInput();
-        float pitchSmoothing = yawSmoothing;
-
-        float strafe = mc.thePlayer.moveStrafing;
-        if (strafe < 0 && deltaYaw < 0 || strafe > 0 && deltaYaw > 0) {
-            yawSmoothing = Math.max(1f, yawSmoothing / 2f);
+    private float[] calculateSmoothRotations(float[] targetRotations) {
+        if (targetRotations == null) {
+            return new float[]{lastYaw, lastPitch};
         }
 
-        float motionY = (float) mc.thePlayer.motionY;
-        if (motionY > 0 && deltaPitch > 0 || motionY < 0 && deltaPitch < 0) {
-            pitchSmoothing = Math.max(1f, pitchSmoothing / 2f);
-        }
+        float sensitivityFactor = mc.gameSettings.mouseSensitivity * 0.6F + 0.2F;
+        float rotationFactor = sensitivityFactor * sensitivityFactor * sensitivityFactor * 128F * (float) rotationSpeed.getInput();
 
-        serverYaw += deltaYaw / Math.max(1f, yawSmoothing);
-        serverPitch += deltaPitch / Math.max(1f, pitchSmoothing);
+        double deltaX = target.posX - mc.thePlayer.posX;
+        double deltaZ = target.posZ - mc.thePlayer.posZ;
+        double deltaY = target.posY + target.getEyeHeight() - (mc.thePlayer.getEntityBoundingBox().minY
+                + (mc.thePlayer.getEntityBoundingBox().maxY - mc.thePlayer.getEntityBoundingBox().minY));
 
-        return new float[] { serverYaw, serverPitch };
+        double horizontalDistance = MathHelper.sqrt_double(deltaX * deltaX + deltaZ * deltaZ);
+        float targetYaw = (float) (MathHelper.atan2(deltaZ, deltaX) * 180.0 / Math.PI) - 90.0F;
+        float targetPitch = (float) (-(MathHelper.atan2(deltaY, horizontalDistance) * 180.0 / Math.PI));
+        float randomFactorYaw = (float) (rotationFactor * Utils.randomizeDouble(0.9F, 1.4));
+        float randomFactorPitch = (float) (rotationFactor * Utils.randomizeDouble(0.7F, 1.7));
+
+        targetYaw = applyRotationSmoothing(mc.thePlayer.prevRotationYawHead, targetYaw, randomFactorYaw);
+        targetPitch = applyRotationSmoothing(mc.thePlayer.prevRotationPitch, targetPitch, randomFactorPitch);
+
+        return new float[]{targetYaw, targetPitch};
     }
+
+    public static float applyRotationSmoothing(float currentRotation, float targetRotation, float speed) {
+        float rotationDifference = MathHelper.wrapAngleTo180_float(targetRotation - currentRotation);
+
+        float randomSpeedFactor = (float) Utils.randomizeDouble(0.9F, 1.2F);
+        speed *= randomSpeedFactor;
+
+        if (rotationDifference > speed) {
+            rotationDifference = speed;
+        }
+
+        if (rotationDifference < -speed) {
+            rotationDifference = -speed;
+        }
+
+        return currentRotation + rotationDifference;
+    }
+
+
 
     private void handleInteractAndAttack(double distance, boolean interactAt, boolean interact, boolean swung) {
         if (ModuleManager.antiFireball != null && ModuleManager.antiFireball.isEnabled() && ModuleManager.antiFireball.fireball != null && ModuleManager.antiFireball.attack) {

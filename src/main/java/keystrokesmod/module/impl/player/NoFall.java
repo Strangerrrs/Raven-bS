@@ -17,9 +17,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class NoFall extends Module {
     public SliderSetting mode;
     private SliderSetting minFallDistance;
-    private SliderSetting timerSpeed;
     private ButtonSetting disableAdventure;
     private ButtonSetting ignoreVoid;
+    private SliderSetting packetTimerSpeed;
     private String[] modes = new String[]{"Spoof", "Packet", "NoGround"};
     private double initialY;
 
@@ -27,9 +27,9 @@ public class NoFall extends Module {
         super("NoFall", category.player);
         this.registerSetting(mode = new SliderSetting("Mode", 0, modes));
         this.registerSetting(minFallDistance = new SliderSetting("Minimum fall distance", 3, 0, 10, 0.1));
-        this.registerSetting(timerSpeed = new SliderSetting("Timer Speed", 0.7, 0.1, 2.0, 0.1));
         this.registerSetting(disableAdventure = new ButtonSetting("Disable adventure", false));
         this.registerSetting(ignoreVoid = new ButtonSetting("Ignore void", true));
+        this.registerSetting(packetTimerSpeed = new SliderSetting("Packet Timer", 0.7, 0.1, 2.0, 0.1));
     }
 
     public void onDisable() {
@@ -52,7 +52,7 @@ public class NoFall extends Module {
                     break;
                 case 1:
                     if (distanceFallen >= minFallDistance.getInput()) {
-                        Utils.getTimer().timerSpeed = (float) timerSpeed.getInput();
+                        Utils.getTimer().timerSpeed = (float) packetTimerSpeed.getInput();
                         PacketUtils.sendPacketNoEvent(new C03PacketPlayer(true));
                         initialY = mc.thePlayer.posY;
                         if (Raven.debug) {

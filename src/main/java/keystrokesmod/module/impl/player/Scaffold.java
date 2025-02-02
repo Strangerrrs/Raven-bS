@@ -44,24 +44,25 @@ public class Scaffold extends Module {
     private ButtonSetting cancelKnockBack;
     private ButtonSetting fastOnRMB;
     private ButtonSetting highlightBlocks;
-    private ButtonSetting jumpFacingForward;
+    private SliderSetting jumpFacingForward;
     public ButtonSetting safeWalk;
     public ButtonSetting showBlockCount;
     private ButtonSetting slowOnEnable;
     private ButtonSetting delayOnJump;
-    private ButtonSetting silentSwing;
+    private SliderSetting silentSwing;
     public ButtonSetting tower;
     private ButtonSetting disableStrafing;
     private SliderSetting offsetForwardYaw;
     private SliderSetting offsetDiagonalYaw;
     private MovingObjectPosition placeBlock;
     public AtomicInteger lastSlot = new AtomicInteger(-1);
-    private String[] rotationModes = new String[]{"None", "Simple", "Strict", "Offset"};
-    private String[] fastScaffoldModes = new String[]{"Disabled", "Sprint", "Edge", "Keep-Y A", "Keep-Y B", "Keep-Y C", "Same-Y", "Boost Test"};
+    private String[] rotationModes = new String[]{"None", "Simple", "Strict", "Offset", "Dynamic"};
+    private String[] fastScaffoldModes = new String[]{"Disabled", "Edge", "Sprint", "Keep-Y A", "Keep-Y B", "Keep-Y C", "Same-Y", "Float"};
     private String[] precisionModes = new String[]{"Very low", "Low", "Moderate", "High", "Very high"};
     private String[] multiPlaceModes = new String[]{"Disabled", "1 extra", "2 extra"};
     private String[] fallbackRotationModes = new String[]{"None", "Closest", "Centered"};
     private SliderSetting fallbackRotation;
+    private String[] jumpFacingForwardModes = new String[]{"None", "Semi", "Full"};
     public float placeYaw;
     public float placePitch;
     public int at;
@@ -85,30 +86,33 @@ public class Scaffold extends Module {
     private boolean wasMoving = false;
     private boolean spaceReleased = true;
     private ButtonSetting adjustToSurroundings;
+    private ButtonSetting autoJump;
+    private boolean initialJumpDone = false;
     public Scaffold() {
         super("Scaffold", category.player);
         this.registerSetting(motion = new SliderSetting("Motion", "x", 1.0, 0.5, 1.2, 0.01));
         this.registerSetting(rotation = new SliderSetting("Rotation", 1, rotationModes));
         this.registerSetting(fallbackRotation = new SliderSetting("Fallback Rotation", 0, fallbackRotationModes));
+        this.registerSetting(jumpFacingForward = new SliderSetting("Jump facing forward", 0, jumpFacingForwardModes));
         this.registerSetting(fastScaffold = new SliderSetting("Fast scaffold", 0, fastScaffoldModes));
         this.registerSetting(fastScaffoldMotion = new SliderSetting("Fast scaffold motion", "x", 1.0, 0.5, 1.2, 0.01));
         this.registerSetting(precision = new SliderSetting("Precision", 4, precisionModes));
         this.registerSetting(multiPlace = new SliderSetting("Multi-place", 0, multiPlaceModes));
+        this.registerSetting(adjustToSurroundings = new ButtonSetting("Adjust to surroundings", true));
+        this.registerSetting(autoJump = new ButtonSetting("Auto jump", true));
         this.registerSetting(autoSwap = new ButtonSetting("Auto swap", true));
         this.registerSetting(cancelKnockBack = new ButtonSetting("Cancel knockback", false));
         this.registerSetting(delayOnJump = new ButtonSetting("Delay on jump", true));
         this.registerSetting(fastOnRMB = new ButtonSetting("Fast on RMB", false));
         this.registerSetting(highlightBlocks = new ButtonSetting("Highlight blocks", true));
-        this.registerSetting(jumpFacingForward = new ButtonSetting("Jump facing forward", false));
         this.registerSetting(safeWalk = new ButtonSetting("Safewalk", true));
         this.registerSetting(showBlockCount = new ButtonSetting("Show block count", true));
-        this.registerSetting(silentSwing = new ButtonSetting("Silent swing", false));
+        this.registerSetting(silentSwing = new SliderSetting("Silent swing", 0, 0, 100, 5));
         this.registerSetting(slowOnEnable = new ButtonSetting("Slow on enable", false));
         this.registerSetting(tower = new ButtonSetting("Tower", false));
         this.registerSetting(disableStrafing = new ButtonSetting("Disable strafing", false));
         this.registerSetting(offsetForwardYaw = new SliderSetting("Offset Forward Yaw", 120, 0, 360, 5));
         this.registerSetting(offsetDiagonalYaw = new SliderSetting("Offset Diagonal Yaw", 220, 0, 360, 5));
-        this.registerSetting(adjustToSurroundings = new ButtonSetting("Adjust to surroundings", true));
     }
 
     public void onDisable() {
@@ -145,12 +149,9 @@ public class Scaffold extends Module {
         if (slowOnEnable.isToggled()) {
             Utils.setSpeed(0.0);
         }
-        if (fastScaffold.getInput() == 7) { // Boost Test
-            mc.thePlayer.motionY = 0.42;
-            startPos = mc.thePlayer.posY;
-        }
         wasMoving = false;
         spaceReleased = true;
+        initialJumpDone = false;
     }
 
     @SubscribeEvent
@@ -161,7 +162,7 @@ public class Scaffold extends Module {
 
         int rotationInput = (int) rotation.getInput();
         if (rotationInput > 0) {
-            boolean usePlaceYaw = ((rotationInput == 2 && forceStrict) || rotationInput == 3) && placeYaw != 2000;
+            boolean usePlaceYaw = ((rotationInput == 2 && forceStrict) || rotationInput == 3 || rotationInput == 4) && placeYaw != 2000;
             float yaw = usePlaceYaw ? placeYaw : getYaw();
             float pitch = usePlaceYaw ? placePitch : 85;
 
@@ -220,10 +221,17 @@ public class Scaffold extends Module {
                 pitch = 85 + (float) (Math.random() * 1);
             }
 
-            if (jumpFacingForward.isToggled() && mc.thePlayer.onGround && keepYPosition()) {
-                yaw = mc.thePlayer.rotationYaw;
-                pitch = (float) (0 + getRandom());
-                delay = true;
+            if (rotationInput == 4) { // Dynamic rotation
+                yaw = placeYaw;
+                pitch = placePitch;
+            }
+
+            if (jumpFacingForward.getInput() > 0 && mc.thePlayer.onGround && keepYPosition()) {
+                if (jumpFacingForward.getInput() == 2 || (jumpFacingForward.getInput() == 1 && Utils.isDiagonal(false))) {
+                    yaw = mc.thePlayer.rotationYaw;
+                    pitch = (float) (0 + getRandom());
+                    delay = true;
+                }
             }
 
             event.setYaw(yaw);
@@ -284,8 +292,18 @@ public class Scaffold extends Module {
             down = false;
             placedUp = false;
         }
-        if (keepYPosition() && (fastScaffold.getInput() == 3 || fastScaffold.getInput() == 4 || fastScaffold.getInput() == 5) && mc.thePlayer.onGround) {
-            mc.thePlayer.jump();
+        if (keepYPosition() && (fastScaffold.getInput() == 3 || fastScaffold.getInput() == 4 || fastScaffold.getInput() == 5 || fastScaffold.getInput() == 7) && mc.thePlayer.onGround) {
+            if (fastScaffold.getInput() == 7 && initialJumpDone && wasMoving && !Utils.isMoving()) {
+                initialJumpDone = false;
+            }
+            if (fastScaffold.getInput() == 7 && initialJumpDone) {
+                
+            } else {
+                if (autoJump.isToggled()) {
+                    mc.thePlayer.jump();
+                }
+                initialJumpDone = true;
+            }
             add = 0;
             if (Math.floor(mc.thePlayer.posY) == Math.floor(startPos) && fastScaffold.getInput() == 5) {
                 placedUp = false;
@@ -338,7 +356,7 @@ public class Scaffold extends Module {
             blockSlot = -1;
             return;
         }
-        if (delay && (delayOnJump.isToggled() || jumpFacingForward.isToggled())) {
+        if (delay && (delayOnJump.isToggled() || jumpFacingForward.getInput() > 0)) {
             delay = false;
             return;
         }
@@ -460,11 +478,6 @@ public class Scaffold extends Module {
         }
         boolean isMoving = Utils.isMoving();
         boolean isSpaceDown = mc.gameSettings.keyBindJump.isKeyDown();
-    
-        if (fastScaffold.getInput() == 7 && isMoving && !wasMoving && spaceReleased) { // Boost Test Beta
-            mc.thePlayer.motionY = 0.42;
-            startPos = mc.thePlayer.posY;
-        }
     
         if (!isSpaceDown) {
             spaceReleased = true;
@@ -625,16 +638,16 @@ public class Scaffold extends Module {
         if (this.isEnabled() && fastScaffold.getInput() > 0 && placeBlock != null && (!fastOnRMB.isToggled() || Mouse.isButtonDown(1))) {
             switch ((int) fastScaffold.getInput()) {
                 case 1:
-                    return true;
-                case 2:
                     return Utils.onEdge();
+                case 2:
+                    return true;
                 case 3:
                 case 4:
                 case 5:
                 case 6:
                     return keepYPosition();
-                case 7: // Boost Test
-                    return true;
+                case 7:
+                    return mc.thePlayer.onGround && !mc.gameSettings.keyBindJump.isKeyDown();
             }
         }
         return false;
@@ -702,10 +715,9 @@ public class Scaffold extends Module {
             return;
         }
         if (!extra && mc.playerController.onPlayerRightClick(mc.thePlayer, mc.theWorld, heldItem, block.getBlockPos(), block.sideHit, block.hitVec)) {
-            if (silentSwing.isToggled()) {
+            if (silentSwing.getInput() > 0 && Math.random() * 100 < silentSwing.getInput()) {
                 mc.thePlayer.sendQueue.addToSendQueue(new C0APacketAnimation());
-            }
-            else {
+            } else {
                 mc.thePlayer.swingItem();
                 if (!(autoSwap.isToggled() && ModuleManager.autoSwap.spoofItem.isToggled())) {
                     mc.getItemRenderer().resetEquippedProgress();
@@ -722,10 +734,9 @@ public class Scaffold extends Module {
             float f1 = (float)(block.hitVec.yCoord - (double)block.getBlockPos().getY());
             float f2 = (float)(block.hitVec.zCoord - (double)block.getBlockPos().getZ());
             mc.thePlayer.sendQueue.addToSendQueue(new C08PacketPlayerBlockPlacement(block.getBlockPos(), block.sideHit.getIndex(), heldItem, f, f1, f2));
-            if (silentSwing.isToggled()) {
+            if (silentSwing.getInput() > 0 && Math.random() * 100 < silentSwing.getInput()) {
                 mc.thePlayer.sendQueue.addToSendQueue(new C0APacketAnimation());
-            }
-            else {
+            } else {
                 mc.thePlayer.swingItem();
                 mc.getItemRenderer().resetEquippedProgress();
             }

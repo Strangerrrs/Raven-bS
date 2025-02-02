@@ -22,7 +22,8 @@ public class Tower extends Module {
     private ButtonSetting disableWhileCollided;
     private ButtonSetting disableWhileHurt;
     private ButtonSetting sprintJumpForward;
-    private SliderSetting ticksSetting;
+    private SliderSetting forwardTicksSetting;
+    private SliderSetting diagonalTicksSetting;
     private int ticks;
     private String[] modes = new String[]{"Buffer", "Low"};
     private int slowTicks;
@@ -40,7 +41,8 @@ public class Tower extends Module {
         this.registerSetting(disableWhileCollided = new ButtonSetting("Disable while collided", false));
         this.registerSetting(disableWhileHurt = new ButtonSetting("Disable while hurt", false));
         this.registerSetting(sprintJumpForward = new ButtonSetting("Sprint jump forward", false));
-        this.registerSetting(ticksSetting = new SliderSetting("Ticks", 10, 7, 20, 1));
+        this.registerSetting(forwardTicksSetting = new SliderSetting("Forward Ticks", 14, 5, 20, 1));
+        this.registerSetting(diagonalTicksSetting = new SliderSetting("Diagonal Ticks", 10, 5, 20, 1));
         this.canBeEnabled = false;
     }
 
@@ -115,7 +117,7 @@ public class Tower extends Module {
             if (mc.thePlayer.onGround) {
                 ticks = 0;
                 ModuleManager.scaffold.tower.setEnabled(true);
-            } else if (ticks > ticksSetting.getInput()) {
+            } else if (ticks > (Utils.isDiagonal(false) ? diagonalTicksSetting.getInput() : forwardTicksSetting.getInput())) {
                 ModuleManager.scaffold.tower.setEnabled(false);
             }
         } else {
