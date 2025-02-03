@@ -25,7 +25,8 @@ public enum Theme {
     Galaxy(new Color(61, 13, 117), new Color(0, 161, 214), new Color(0, 0, 0)), // 17
     Aurora(new Color(161, 161, 255), new Color(0, 153, 255), new Color(75, 0, 130)), // 19
     Tropical_Punch(new Color(255, 58, 74), new Color(253, 203, 88), new Color(87, 193, 229)), // 20
-    Purple(new Color(157, 0, 255), new Color(191, 0, 255)); // 21
+    Purple(new Color(157, 0, 255), new Color(191, 0, 255)), // 21
+    Ocean(new Color(55, 59, 68), new Color(66, 134, 244), new Color(255, 255, 255)); // 22
 
     private final Color firstGradient;
     private final Color secondGradient;
@@ -104,6 +105,6 @@ public enum Theme {
             "Rainbow", "Cherry", "Cotton candy", "Flare", "Flower", "Gold", "Grayscale",
             "Royal", "Sky", "Vine", "Astolfo",
             "Ocean Breeze", "Twilight", "Minty Fresh",
-            "Galaxy", "Aurora", "Tropical Punch", "Purple"
+            "Galaxy", "Aurora", "Tropical Punch", "Purple", "Ocean"
     };
 }
