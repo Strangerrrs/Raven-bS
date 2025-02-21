@@ -11,6 +11,7 @@ import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.combat.KillAura;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.setting.impl.ButtonSetting;
+import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.*;
 import keystrokesmod.utility.Timer;
@@ -34,7 +35,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Scaffold extends Module {
-    private final SliderSetting motion;
+    private final SliderSetting sprintScaffoldMotion;
+    private final SliderSetting fastScaffoldMotion;
     public SliderSetting rotation;
     private SliderSetting sprint;
     private SliderSetting fastScaffold;
@@ -105,7 +107,8 @@ public class Scaffold extends Module {
 
     public Scaffold() {
         super("Scaffold", category.player);
-        this.registerSetting(motion = new SliderSetting("Motion", "x", 1.0, 0.5, 1.2, 0.01));
+        this.registerSetting(sprintScaffoldMotion = new SliderSetting("Sprint Scaffold Motion", "x", 1.0, 0.5, 1.2, 0.01));
+        this.registerSetting(fastScaffoldMotion = new SliderSetting("Fast Scaffold Motion", "x", 1.0, 0.5, 1.2, 0.01));
         this.registerSetting(rotation = new SliderSetting("Rotation", 1, rotationModes));
         this.registerSetting(sprint = new SliderSetting("Sprint mode", 0, sprintModes));
         this.registerSetting(fastScaffold = new SliderSetting("Fast scaffold", 0, fastScaffoldModes));
@@ -260,6 +263,8 @@ public class Scaffold extends Module {
                 int quadVal = 0;
 
                 float minPitch = 78.650f;
+                // Adjust the pitch to look more down
+                float adjustedPitch = 85.0f;
 
                 float firstStraight = 123.50f;
                 float secondStraight = 125.50f;
@@ -343,8 +348,8 @@ public class Scaffold extends Module {
                     blockYaw = blockRotations[0];
                     pitch = blockRotations[1];
                     yawOffset = blockYawOffset;
-                    if (pitch < minPitch && Utils.getHorizontalSpeed() < 0.6) {
-                        //pitch = minPitch;
+                    if (pitch < adjustedPitch && Utils.getHorizontalSpeed() < 0.6) {
+                        pitch = adjustedPitch;
                     }
                     if (firstStroke == 0) {
                         strokeDelay = 300;
@@ -352,7 +357,7 @@ public class Scaffold extends Module {
                 } else {
                     firstStroke = System.currentTimeMillis();
                     yawOffset = 0;
-                    pitch = minPitch;
+                    pitch = adjustedPitch;
                     strokeDelay = 200;
                 }
                 minOffset = 0;//turning this off for now
@@ -560,6 +565,10 @@ public class Scaffold extends Module {
                             break;
                         case 6:
                             if (!firstKeepYPlace && keepYTicks == 3) {
+                                firstKeepYPlace = true;
+                            }
+                        case 7: // Jump A
+                            if (!firstKeepYPlace && keepYTicks == 3) {
                                 placeBlock(1, 0);
                                 firstKeepYPlace = true;
                             }
@@ -638,12 +647,7 @@ public class Scaffold extends Module {
     @Override
     public String getInfo() {
         String info;
-        if (fastOnRMB.isToggled()) {
-            info = Mouse.isButtonDown(1) && Utils.tabbedIn() ? fastScaffoldModes[(int) fastScaffold.getInput()] : sprintModes[(int) sprint.getInput()];
-        }
-        else {
-            info = fastScaffold.getInput() > 0 ? fastScaffoldModes[(int) fastScaffold.getInput()] : sprintModes[(int) sprint.getInput()];
-        }
+        info = sprintModes[(int) sprint.getInput()];
         return info;
     }
 
@@ -937,11 +941,16 @@ public class Scaffold extends Module {
     }
 
     private void handleMotion() {
-        if (ModuleManager.tower.canTower() || !mc.thePlayer.onGround || motion.getInput() == 1) {
+        if (ModuleManager.tower.canTower() || !mc.thePlayer.onGround) {
             return;
         }
-        mc.thePlayer.motionX *= motion.getInput();
-        mc.thePlayer.motionZ *= motion.getInput();
+        if (usingFastScaffold()) {
+            mc.thePlayer.motionX *= fastScaffoldMotion.getInput();
+            mc.thePlayer.motionZ *= fastScaffoldMotion.getInput();
+        } else {
+            mc.thePlayer.motionX *= sprintScaffoldMotion.getInput();
+            mc.thePlayer.motionZ *= sprintScaffoldMotion.getInput();
+        }
     }
 
     public float hardcodedYaw() {
